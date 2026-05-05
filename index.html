@@ -517,10 +517,12 @@ function normalizeBookingTime(value) {
   const raw = String(value).trim();
   if(raw==='') return '';
 
-  // Jika format ISO datetime (termasuk Z), konversi dulu ke waktu lokal
-  const iso = new Date(raw);
-  if(!isNaN(iso.getTime()) && raw.includes('T')) {
-    return hhmm(iso.getHours(), iso.getMinutes());
+  // Jika format ISO datetime atau string tanggal dengan waktu, parse sebagai Date terlebih dahulu
+  if(raw.includes('T') || raw.includes('Z') || /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    const iso = new Date(raw);
+    if(!isNaN(iso.getTime())) {
+      return hhmm(iso.getHours(), iso.getMinutes());
+    }
   }
 
   // Coba ekstrak format HH:mm dari string apapun
