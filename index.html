@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>SyncRoom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="text/javascript" src="https://cdn.emailjs.com/sdk/3.2.0/email.min.js"></script>
+<script>
+  if(window.emailjs){
+    emailjs.init('fcVKu3OqV1DVRLZFc');
+  }
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #E2C9B0;
+  --surface: #FFFFFF;
+  --surface-2: #FDFBF9;
+  --border: #E8DFD3;
+  --border-strong: #D9CFC2;
+  --text-1: #2D2A26;
+  --text-2: #6B6A67;
+  --text-3: #9A9895;
+  --accent: #7E3524;
+  --accent-fg: #FFFFFF;
+  --blue: #3B82F6;
+  --blue-bg: rgba(59,130,246,0.12);
+  --blue-border: rgba(59,130,246,0.24);
+  --green: #22C55E;
+  --green-bg: rgba(34,197,94,0.12);
+  --green-border: rgba(34,197,94,0.24);
+  --amber: #F59E0B;
+  --amber-bg: rgba(245,158,11,0.14);
+  --amber-border: rgba(245,158,11,0.28);
+  --red: #DC2626;
+  --red-bg: rgba(220,38,38,0.12);
+  --red-border: rgba(220,38,38,0.24);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow: 0 4px 20px rgba(54,19,4,0.12), 0 2px 8px rgba(54,19,4,0.06);
+  --shadow-md: 0 8px 32px rgba(54,19,4,0.16), 0 4px 16px rgba(54,19,4,0.08);
+}
+body { font-family:'DM Sans',system-ui,sans-serif; background:linear-gradient(180deg,#E2C9B0 0%,#D9BFA3 100%); color:var(--text-1); min-height:100vh; font-size:14px; line-height:1.6; }
+
+/* HEADER */
+.app-header { background:linear-gradient(135deg,#361304 0%,#4A1808 100%); border-bottom:2px solid #2A0F02; padding:0 24px; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 4px 16px rgba(54,19,4,0.25); }
+.logo { display:flex; align-items:center; gap:10px; font-weight:700; font-size:16px; letter-spacing:-0.35px; color:#F5E6D3; cursor:pointer; transition:all 0.3s; }
+.logo:hover { transform:scale(1.04); }
+.logo-icon { width:34px; height:34px; background:linear-gradient(135deg,#E2C9B0 0%,#D9BFA3 100%); border-radius:14px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(226,201,176,0.3); }
+.logo-icon svg { width:16px; height:16px; fill:none; stroke:#361304; stroke-width:2; }
+.header-date { font-size:12px; color:#E2C9B0; font-family:'DM Mono',monospace; }
+.header-actions { display:flex; align-items:center; gap:10px; }
+
+/* NAV — hanya Dashboard */
+.nav-tabs { background:linear-gradient(135deg,rgba(54,19,4,0.08) 0%,rgba(54,19,4,0.05) 100%); border-bottom:1px solid var(--border); padding:0 24px; display:flex; gap:0; }
+.nav-tab { padding:14px 18px; font-size:13px; font-weight:600; color:var(--text-2); cursor:pointer; border:none; background:none; border-bottom:2px solid transparent; white-space:nowrap; font-family:'DM Sans',sans-serif; transition:all 0.25s; }
+.nav-tab.active { color:#7E3524; border-bottom-color:#7E3524; }
+.nav-tab:hover:not(.active) { color:var(--text-1); }
+
+/* PAGES */
+.page { display:none; }
+.page.active { display:block; }
+.main-wrapper { max-width:1100px; margin:0 auto; padding:24px 24px 60px; }
+
+/* STATS */
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:18px 20px; box-shadow:var(--shadow); transition:all 0.25s; }
+.stat-card:hover { border-color:#7E3524; box-shadow:0 8px 24px rgba(126,53,36,0.15); transform:translateY(-2px); }
+.stat-label { font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-3); margin-bottom:8px; font-weight:600; }
+.stat-value { font-size:28px; font-weight:700; letter-spacing:-0.8px; color:#7E3524; line-height:1; }
+.stat-sub { font-size:12px; color:var(--text-2); margin-top:5px; }
+
+/* DATE NAV */
+.date-nav { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+.date-nav-btn { width:30px; height:30px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-2); transition:all 0.25s; }
+.date-nav-btn:hover { border-color:#7E3524; color:#7E3524; transform:translateY(-2px); box-shadow:0 4px 12px rgba(126,53,36,0.15); }
+.date-nav-btn svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2; }
+.date-nav-label { font-weight:600; font-size:15px; letter-spacing:-0.3px; flex:1; }
+.date-nav-sub { font-size:12px; color:var(--text-2); }
+.date-today-btn { padding:5px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--text-2); cursor:pointer; transition:all 0.25s; }
+.date-today-btn:hover { border-color:#7E3524; color:#7E3524; }
+.date-today-btn.active { background:#7E3524; color:#FFFFFF; border-color:#7E3524; box-shadow:0 4px 12px rgba(126,53,36,0.25); }
+
+/* CONTENT */
+.content-grid { display:grid; grid-template-columns:1fr 360px; gap:18px; align-items:start; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow); overflow:hidden; transition:all 0.25s; }
+.card:hover { border-color:#7E3524; box-shadow:0 8px 28px rgba(126,53,36,0.15); }
+.card-header { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.card-title { font-weight:700; font-size:14px; color:var(--text-1); letter-spacing:-0.3px; }
+
+/* ROOM LIST */
+.room-item { display:flex; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border); gap:14px; cursor:pointer; transition:all 0.25s; }
+.room-item:last-child { border-bottom:none; }
+.room-item:hover { background:rgba(126,53,36,0.04); transform:translateY(-1px); }
+.room-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.room-info { flex:1; min-width:0; }
+.room-name { font-weight:700; font-size:14px; color:var(--text-1); margin-bottom:3px; }
+.room-meta { font-size:12px; color:var(--text-2); }
+.room-status-area { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.room-booking-info { font-size:11px; color:var(--text-3); font-family:'DM Mono',monospace; }
+
+/* BADGE */
+.badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:500; border:1px solid; white-space:nowrap; }
+.badge-dot { width:6px; height:6px; border-radius:50%; }
+.badge.available { background:var(--green-bg); border-color:var(--green-border); color:var(--green); }
+.badge.available .badge-dot { background:var(--green); }
+.badge.occupied  { background:var(--red-bg); border-color:var(--red-border); color:var(--red); }
+.badge.occupied .badge-dot  { background:var(--red); animation:pulse 1.5s infinite; }
+.badge.soon      { background:var(--amber-bg); border-color:var(--amber-border); color:var(--amber); }
+.badge.soon .badge-dot      { background:var(--amber); }
+.badge.future    { background:var(--blue-bg); border-color:var(--blue-border); color:var(--blue); }
+.badge.future .badge-dot    { background:var(--blue); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* TIMELINE */
+.time-labels { display:flex; padding:6px 18px 6px calc(90px + 18px); background:var(--surface-2); }
+.time-label { flex:1; font-size:10px; color:var(--text-3); font-family:'DM Mono',monospace; text-align:center; }
+.time-label:first-child { text-align:left; }
+.time-label:last-child  { text-align:right; }
+.timeline-row { display:flex; align-items:center; padding:12px 18px; border-bottom:1px solid var(--border); gap:10px; min-height:52px; transition:all 0.25s; }
+.timeline-row:last-child { border-bottom:none; }
+.timeline-row:hover { background:rgba(126,53,36,0.03); }
+.timeline-room-label { width:82px; flex-shrink:0; font-size:11px; font-weight:600; color:var(--text-1); }
+.timeline-track { flex:1; height:28px; background:var(--surface-2); border-radius:var(--radius-sm); position:relative; border:1px solid var(--border); }
+.timeline-block { position:absolute; height:100%; border-radius:var(--radius-sm); display:flex; align-items:center; padding:0 8px; font-size:10px; font-weight:600; overflow:hidden; white-space:nowrap; cursor:pointer; transition:all 0.2s; }
+.timeline-block.occupied { background:linear-gradient(135deg,#DC2626 0%,#B91C1C 100%); color:white; }
+.timeline-block.upcoming { background:linear-gradient(135deg,#7E3524 0%,#9B4530 100%); color:white; }
+.timeline-block.done     { background:rgba(249,248,243,0.6); color:var(--text-3); }
+.timeline-block:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(126,53,36,0.25); }
+.timeline-now-line { position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--red); border-radius:1px; z-index:5; }
+.timeline-now-line::before { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:8px; height:8px; background:var(--red); border-radius:50%; }
+
+/* BOOKING LIST */
+.booking-item { display:flex; align-items:flex-start; padding:16px 20px; border-bottom:1px solid var(--border); gap:14px; transition:all 0.25s; }
+.booking-item:last-child { border-bottom:none; }
+.booking-item:hover { background:rgba(126,53,36,0.03); }
+.booking-time-col { font-family:'DM Mono',monospace; font-size:11px; color:var(--text-2); flex-shrink:0; width:72px; line-height:1.5; }
+.booking-detail { flex:1; min-width:0; }
+.booking-title { font-weight:600; font-size:13px; color:var(--text-1); margin-bottom:4px; }
+.booking-meta  { font-size:12px; color:var(--text-2); }
+.booking-actions { display:flex; gap:6px; }
+
+/* FORM */
+.form-body { padding:20px; }
+.form-group { margin-bottom:16px; }
+.form-label { display:block; font-size:12px; font-weight:600; color:var(--text-2); margin-bottom:6px; }
+.form-control { width:100%; padding:11px 14px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface); color:var(--text-1); font-family:'DM Sans',sans-serif; font-size:13px; outline:none; transition:all 0.25s; appearance:none; -webkit-appearance:none; }
+.form-control:focus { border-color:#7E3524; box-shadow:0 0 0 3px rgba(126,53,36,0.12); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.btn-primary { width:100%; padding:12px 18px; background:linear-gradient(135deg,#7E3524 0%,#9B4530 100%); color:#FFFFFF; border:none; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.3s; margin-top:6px; box-shadow:0 16px 35px rgba(126,53,36,0.3); }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 20px 45px rgba(126,53,36,0.4); }
+.btn-primary:active { transform:translateY(0); }
+.btn-primary:disabled { opacity:0.55; cursor:not-allowed; box-shadow:none; transform:none; }
+.btn-icon { width:34px; height:34px; border-radius:14px; border:1px solid var(--border); background:var(--surface); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-2); transition:all 0.25s; }
+.btn-icon:hover { border-color:#7E3524; color:#7E3524; transform:translateY(-2px); box-shadow:0 4px 12px rgba(126,53,36,0.15); }
+.btn-icon svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.8; }
+.btn-outline { padding:10px 16px; background:transparent; color:#F5E6D3; border:1px solid #F5E6D3; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.25s; white-space:nowrap; }
+.btn-outline:hover { background:rgba(245,230,211,0.1); border-color:#E2C9B0; }
+
+/* TABS */
+.tabs { display:flex; gap:2px; padding:4px; background:rgba(126,53,36,0.05); border-radius:var(--radius-sm); }
+.tab { flex:1; padding:7px 12px; border:none; background:transparent; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; color:var(--text-2); cursor:pointer; transition:all 0.25s; white-space:nowrap; }
+.tab.active { background:linear-gradient(135deg,rgba(126,53,36,0.15) 0%,rgba(126,53,36,0.1) 100%); color:#7E3524; box-shadow:0 2px 8px rgba(126,53,36,0.12); }
+
+/* TOAST */
+.toast-container { position:fixed; bottom:24px; right:24px; z-index:999; display:flex; flex-direction:column; gap:8px; }
+.toast { background:var(--text-1); color:white; padding:12px 18px; border-radius:var(--radius-md); font-size:13px; box-shadow:var(--shadow-md); animation:slideIn .2s ease; max-width:300px; }
+.toast.success { background:linear-gradient(135deg,#22C55E 0%,#16A34A 100%); }
+.toast.error   { background:linear-gradient(135deg,#DC2626 0%,#B91C1C 100%); }
+@keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* LOADING */
+.loading-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.88); z-index:300; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity 0.25s; }
+.loading-overlay.show { opacity:1; pointer-events:all; }
+.spinner { width:32px; height:32px; border:3px solid rgba(126,53,36,0.2); border-top-color:#7E3524; border-radius:50%; animation:spin .7s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* MODAL */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.35); backdrop-filter:blur(3px); z-index:200; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.25s; }
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal { background:var(--surface); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); width:100%; max-width:520px; margin:16px; transform:translateY(10px); transition:transform 0.25s; max-height:92vh; overflow-y:auto; border:1px solid var(--border); }
+.modal-overlay.open .modal { transform:translateY(0); }
+.modal-header { padding:22px 22px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:var(--surface); z-index:1; }
+.modal-title { font-weight:700; font-size:16px; letter-spacing:-0.3px; color:var(--text-1); }
+.modal-body { padding:22px; }
+.view-section { display:none; }
+.view-section.active { display:block; }
+.empty-state { padding:36px 18px; text-align:center; color:var(--text-3); font-size:13px; }
+
+/* SHEETS STATUS */
+.sheets-status { display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:var(--radius-sm); font-size:12px; font-weight:500; }
+.sheets-status.connected    { background:rgba(34,197,94,0.15); color:var(--green); border:1px solid var(--green-border); }
+.sheets-status.disconnected { background:rgba(220,38,38,0.15); color:var(--red); border:1px solid var(--red-border); }
+.sheets-status.loading      { background:rgba(245,158,11,0.15); color:var(--amber); border:1px solid var(--amber-border); }
+.sheets-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+/* QR PAGE */
+.qr-page-wrapper { max-width:480px; margin:0 auto; padding:32px 24px 60px; }
+.qr-single-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); overflow:hidden; }
+.qr-single-header { background:linear-gradient(135deg,#361304 0%,#4A1808 100%); padding:26px; text-align:center; }
+.qr-single-logo-wrap { display:flex; align-items:center; justify-content:center; gap:10px; color:white; font-weight:700; font-size:18px; letter-spacing:-0.3px; margin-bottom:6px; }
+.qr-single-sub { font-size:12px; color:#E2C9B0; opacity:0.85; }
+.qr-single-body { padding:28px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+.qr-frame { padding:14px; background:white; border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow); }
+.qr-single-title { font-size:16px; font-weight:700; color:var(--text-1); text-align:center; letter-spacing:-0.3px; }
+.qr-single-desc  { font-size:13px; color:var(--text-2); text-align:center; line-height:1.6; }
+.qr-single-url   { font-size:11px; color:var(--text-3); font-family:'DM Mono',monospace; text-align:center; word-break:break-all; padding:8px 12px; background:var(--surface-2); border-radius:var(--radius-sm); border:1px solid var(--border); width:100%; }
+
+/* MOBILE */
+.mobile-room-view { max-width:480px; margin:0 auto; padding:16px 16px 90px; }
+.mobile-back-btn { display:flex; align-items:center; gap:6px; padding:4px 0; background:none; border:none; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text-2); cursor:pointer; margin-bottom:14px; transition:all 0.25s; }
+.mobile-back-btn:hover { color:#7E3524; transform:translateX(-2px); }
+.mobile-back-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; }
+.mobile-room-hero { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:22px; margin-bottom:14px; box-shadow:var(--shadow); }
+.mobile-floor-tag { font-size:10px; text-transform:uppercase; letter-spacing:0.6px; font-weight:600; color:var(--text-3); margin-bottom:6px; }
+.mobile-room-name { font-size:22px; font-weight:700; letter-spacing:-0.5px; margin-bottom:6px; color:var(--text-1); }
+.mobile-status-big { display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:var(--radius-md); margin:13px 0 12px; font-weight:600; font-size:14px; }
+.mobile-status-big.available { background:var(--green-bg); color:var(--green); border:1px solid var(--green-border); }
+.mobile-status-big.occupied  { background:var(--red-bg);   color:var(--red);   border:1px solid var(--red-border); }
+.mobile-status-big.soon      { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-border); }
+.mobile-status-big.future    { background:var(--blue-bg);  color:var(--blue);  border:1px solid var(--blue-border); }
+.status-dot-big { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.mobile-status-big.available .status-dot-big { background:var(--green); }
+.mobile-status-big.occupied  .status-dot-big { background:var(--red); animation:pulse 1.5s infinite; }
+.mobile-status-big.soon      .status-dot-big { background:var(--amber); }
+.mobile-status-big.future    .status-dot-big { background:var(--blue); }
+.mobile-current-info { padding:14px; background:rgba(126,53,36,0.05); border-radius:var(--radius-sm); font-size:13px; color:var(--text-2); line-height:1.6; border-left:3px solid #7E3524; }
+.mobile-current-title { font-weight:600; font-size:14px; color:var(--text-1); margin-bottom:4px; }
+.mobile-section-title { font-size:11px; text-transform:uppercase; letter-spacing:0.6px; font-weight:600; color:var(--text-3); margin-bottom:10px; }
+.mobile-schedule-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:14px 16px; margin-bottom:10px; display:flex; align-items:flex-start; gap:10px; transition:all 0.25s; }
+.mobile-schedule-item:hover { border-color:#7E3524; box-shadow:0 4px 12px rgba(126,53,36,0.12); transform:translateX(2px); }
+.mobile-schedule-time { font-family:'DM Mono',monospace; font-size:12px; color:var(--text-2); flex-shrink:0; width:68px; line-height:1.5; }
+.mobile-schedule-info { flex:1; }
+.mobile-schedule-title { font-weight:600; font-size:14px; color:var(--text-1); margin-bottom:4px; }
+.mobile-schedule-meta  { font-size:12px; color:var(--text-2); }
+.mobile-booking-btn { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#7E3524 0%,#9B4530 100%); color:#FFFFFF; border:none; border-radius:50px; padding:14px 32px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 18px 36px rgba(126,53,36,0.3); white-space:nowrap; z-index:50; width:calc(100% - 32px); max-width:440px; transition:all 0.3s; }
+.mobile-booking-btn:hover { transform:translateX(-50%) translateY(-3px); box-shadow:0 22px 48px rgba(126,53,36,0.4); }
+
+/* PRINT */
+@media print {
+  .app-header,.nav-tabs,.no-print { display:none !important; }
+  .page { display:block !important; }
+  .page:not(#page-qr) { display:none !important; }
+  body { background:white; }
+  .qr-page-wrapper { padding:0; }
+}
+
+@media (max-width:768px) {
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .content-grid { grid-template-columns:1fr; }
+  .main-wrapper { padding:14px 14px 40px; }
+  .header-date { display:none; }
+}
+@media (max-width:480px) {
+  .app-header { padding:0 14px; }
+  .nav-tabs   { padding:0 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay"><div class="spinner"></div></div>
+
+<header class="app-header">
+  <div class="logo" onclick="goHome()">
+    <div class="logo-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+    <span id="header-title">SyncRoom</span>
+  </div>
+  <div class="header-actions">
+    <div class="sheets-status loading no-print" id="sheets-status"><div class="sheets-dot"></div><span id="sheets-status-text">Menghubungkan…</span></div>
+    <span class="header-date" id="live-clock"></span>
+    <button class="btn-outline no-print" id="btn-booking-new" onclick="openBookingModal()">+ Booking</button>
+  </div>
+</header>
+
+<!-- NAV: hanya Dashboard -->
+<nav class="nav-tabs no-print" id="main-nav">
+  <button class="nav-tab active" onclick="showPage('dashboard',this)">Dashboard</button>
+</nav>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="main-wrapper">
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="changeDate(-1)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div style="flex:1;">
+        <div class="date-nav-label" id="date-nav-label">—</div>
+        <div class="date-nav-sub" id="date-nav-sub">—</div>
+      </div>
+      <button class="date-today-btn" id="btn-today" onclick="goToToday()">Hari Ini</button>
+      <button class="date-nav-btn" onclick="changeDate(1)"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Sedang Digunakan</div><div class="stat-value" id="stat-occupied">0</div><div class="stat-sub">dari <span id="stat-total">0</span> ruangan</div></div>
+      <div class="stat-card"><div class="stat-label">Tersedia Sekarang</div><div class="stat-value" id="stat-available">0</div><div class="stat-sub" style="color:var(--green)">siap digunakan</div></div>
+      <div class="stat-card"><div class="stat-label">Booking Terpilih</div><div class="stat-value" id="stat-today">0</div><div class="stat-sub">sesi terjadwal</div></div>
+      <div class="stat-card"><div class="stat-label">Berikutnya</div><div class="stat-value" style="font-size:18px;letter-spacing:-0.4px;" id="stat-next">—</div><div class="stat-sub" id="stat-next-sub">—</div></div>
+    </div>
+
+    <div class="content-grid">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Status Ruangan</span><span style="font-size:11px;color:var(--text-3);">klik untuk detail</span></div>
+          <div id="room-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Jadwal</span>
+            <div class="tabs">
+              <button class="tab active" onclick="switchView('timeline',this)">Timeline</button>
+              <button class="tab" onclick="switchView('list',this)">Daftar</button>
+            </div>
+          </div>
+          <div id="view-timeline" class="view-section active">
+            <div class="time-labels" id="time-labels-row"></div>
+            <div id="timeline-rows"></div>
+          </div>
+          <div id="view-list" class="view-section"><div id="booking-list"></div></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Booking Cepat</span></div>
+          <div class="form-body">
+            <div class="form-group"><label class="form-label">Nama Acara / Keperluan</label><input type="text" class="form-control" id="q-title" placeholder="cth: Rapat Divisi Marketing" /></div>
+            <div class="form-group"><label class="form-label">Ruangan</label><select class="form-control" id="q-room"></select></div>
+            <div class="form-group"><label class="form-label">Penanggungjawab</label><input type="text" class="form-control" id="q-pic" placeholder="Nama karyawan" /></div>
+            <div class="form-group"><label class="form-label">Tanggal</label><input type="date" class="form-control" id="q-date" /></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Mulai</label><input type="time" class="form-control" id="q-start" /></div>
+              <div class="form-group"><label class="form-label">Selesai</label><input type="time" class="form-control" id="q-end" /></div>
+            </div>
+            <div class="form-group"><label class="form-label">Jumlah Peserta</label><input type="number" class="form-control" id="q-pax" placeholder="cth: 8" min="1" /></div>
+            <div class="form-group"><label class="form-label">Peserta (opsional)</label><input type="text" class="form-control" id="q-participants" placeholder="cth: Budi, Ani, Rina" /></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Email PIC</label><input type="email" class="form-control" id="q-email" placeholder="email@kantor.com" /></div>
+              <div class="form-group"><label class="form-label">No. HP PIC</label><input type="tel" class="form-control" id="q-phone" placeholder="08xx-xxxx-xxxx" /></div>
+            </div>
+            <button class="btn-primary" id="q-submit-btn" onclick="submitQuickBooking()">Buat Booking</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);">
+          <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">Keterangan</div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);"></div> Tersedia</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--red);"></div> Sedang digunakan</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--amber);"></div> Segera digunakan (≤30 mnt)</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--blue);"></div> Hari lain (terpilih)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR PAGE — tidak ada di nav, akses via ?page=qr -->
+<div class="page" id="page-qr">
+  <div class="qr-page-wrapper">
+    <div class="qr-single-card">
+      <div class="qr-single-header">
+        <div class="qr-single-logo-wrap">
+          <div class="logo-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#361304" stroke-width="2"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+          SyncRoom
+        </div>
+        <div class="qr-single-sub">Sistem Booking Ruang Meeting</div>
+      </div>
+      <div class="qr-single-body">
+        <div class="qr-frame" id="qr-main"></div>
+        <div class="qr-single-title">Scan untuk Akses Aplikasi</div>
+        <div class="qr-single-desc">Scan QR code ini dari HP untuk membuka aplikasi booking ruang meeting. Pastikan HP terhubung ke jaringan WiFi kantor.</div>
+        <div class="qr-single-url" id="qr-url-display">—</div>
+        <button class="btn-primary no-print" onclick="window.print()" style="width:auto;padding:10px 24px;margin-top:4px;">
+          <span style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print QR Code</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE ROOM PAGE -->
+<div class="page" id="page-mobile-room">
+  <div class="mobile-room-view">
+    <button class="mobile-back-btn no-print" onclick="goHome()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Semua Ruangan</button>
+    <div id="mobile-room-content"></div>
+    <button class="mobile-booking-btn no-print" onclick="openBookingModal()">+ Booking Ruangan Ini</button>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Modal Booking -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Booking Ruang Meeting</span>
+      <button class="btn-icon" onclick="closeModal('booking-modal')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Nama Acara / Keperluan</label><input type="text" class="form-control" id="m-title" placeholder="cth: Rapat Bulanan HRD" /></div>
+      <div class="form-group"><label class="form-label">Ruangan</label><select class="form-control" id="m-room"></select></div>
+      <div class="form-group"><label class="form-label">Penanggungjawab</label><input type="text" class="form-control" id="m-pic" placeholder="Nama karyawan" /></div>
+      <div class="form-group"><label class="form-label">Tanggal</label><input type="date" class="form-control" id="m-date" /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Mulai</label><input type="time" class="form-control" id="m-start" /></div>
+        <div class="form-group"><label class="form-label">Selesai</label><input type="time" class="form-control" id="m-end" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Jumlah Peserta</label><input type="number" class="form-control" id="m-pax" placeholder="cth: 8" min="1" /></div>
+      <div class="form-group"><label class="form-label">Peserta</label><input type="text" class="form-control" id="m-participants" placeholder="cth: Budi, Ani, Rina" /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email PIC</label><input type="email" class="form-control" id="m-email" placeholder="email@kantor.com" /></div>
+        <div class="form-group"><label class="form-label">No. HP PIC</label><input type="tel" class="form-control" id="m-phone" placeholder="08xx-xxxx-xxxx" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Catatan (opsional)</label><textarea class="form-control" id="m-note" rows="2" placeholder="Keperluan tambahan..."></textarea></div>
+      <button class="btn-primary" id="m-submit-btn" onclick="submitModalBooking()">Konfirmasi Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Delete -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Hapus Booking</span>
+      <button class="btn-icon" onclick="closeModal('delete-modal')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Yakin ingin menghapus booking <strong id="delete-booking-name"></strong>?</p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" style="background:var(--red);" onclick="confirmDelete()">Hapus</button>
+        <button class="btn-primary" style="background:var(--surface);color:var(--text-1);border:1px solid var(--border);" onclick="closeModal('delete-modal')">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════╗
+//  ⚙️  KONFIGURASI — edit di sini, tidak perlu lewat UI
+// ╠══════════════════════════════════════════════════════════════╣
+
+// 1. URL Google Apps Script Web App
+//    Paste URL deploy kamu di sini, contoh:
+//    'https://script.google.com/macros/s/AKfycbx.../exec'
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwXQuNf1p7sF6anDRrNLJo9x8KaZgjcBR4Bj4alyLoZ9vzCtUK_CZ5S3DaRL2t8AFeKDA/exec';
+
+// 2. Daftar ruangan — tambah/kurangi sesuai kantor
+const ROOMS = [
+  { id:'r1', name:'Ruang Garuda',   capacity:12, floor:'Lt. 2', color:'#8E5632' },
+  { id:'r2', name:'Ruang Elang',    capacity:8,  floor:'Lt. 2', color:'#7E3524' },
+  { id:'r3', name:'Ruang Merpati',  capacity:6,  floor:'Lt. 3', color:'#A66D50' },
+  { id:'r4', name:'Ruang Rajawali', capacity:20, floor:'Lt. 3', color:'#361304' },
+];
+
+// ╚══════════════════════════════════════════════════════════════╝
+
+// ═══ STATE ═══
+let bookings = [];
+let deleteTargetId = null;
+let mobileRoomId = null;
+let viewDate = todayDate();
+let qrGenerated = false;
+
+// ═══ HELPERS ═══
+function pad(v) { return String(v).padStart(2,'0'); }
+function hhmm(h,m) { return `${pad(h)}:${pad(m)}`; }
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function todayDate() { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function timeToMin(t) { const [h,m]=t.split(':').map(Number); return h*60+m; }
+function minToTime(m) { return hhmm(Math.floor(m/60),m%60); }
+function nowMin() { const n=new Date(); return n.getHours()*60+n.getMinutes(); }
+function isToday(d) { return d===todayDate(); }
+function addDays(dateStr,n) {
+  const d=new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function formatDateLabel(dateStr) {
+  return new Date(dateStr+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+// ═══ SHEETS API ═══
+function setSheetStatus(state,text) {
+  document.getElementById('sheets-status').className=`sheets-status ${state}`;
+  document.getElementById('sheets-status-text').textContent=text;
+}
+async function apiGet() {
+  const res=await fetch(SHEET_URL); if(!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
+}
+async function apiPost(payload) {
+  const res=await fetch(SHEET_URL,{method:'POST',body:JSON.stringify(payload)});
+  if(!res.ok) throw new Error('HTTP '+res.status); return res.json();
+}
+async function loadBookings() {
+  if(!SHEET_URL){ setSheetStatus('disconnected','Belum terhubung'); loadFallback(); return; }
+  setSheetStatus('loading','Memuat…');
+  try {
+    const data=await apiGet();
+    bookings=data.bookings.map(b=>({...b,date:String(b.date)}));
+    setSheetStatus('connected','Terhubung ke Sheets');
+    render();
+  } catch(e) {
+    setSheetStatus('disconnected','Gagal terhubung');
+    showToast('Gagal memuat dari Google Sheets.','error');
+    loadFallback();
+  }
+}
+function loadFallback() {
+  const s=localStorage.getItem('rmb_bookings_local');
+  bookings=s?JSON.parse(s):[];
+  if(!bookings.length) seedSample();
+  render();
+}
+function seedSample() {
+  const t=todayDate(),t1=addDays(t,1),t2=addDays(t,3);
+  bookings=[
+    {id:uid(),roomId:'r1',title:'Rapat Direksi Q2',         pic:'Pak Hendra',participants:'Budi, Sari, Rina',date:t, start:hhmm(8,0),  end:hhmm(10,0),note:''},
+    {id:uid(),roomId:'r2',title:'Review Sprint 14',          pic:'Bu Fitri',  participants:'Tim Dev',         date:t, start:hhmm(9,30), end:hhmm(11,0),note:''},
+    {id:uid(),roomId:'r3',title:'Onboarding Karyawan Baru',  pic:'Bu Wulan',  participants:'HRD Team',        date:t, start:hhmm(13,0), end:hhmm(15,0),note:''},
+    {id:uid(),roomId:'r1',title:'Town Hall Bulanan',         pic:'Pak Tomi',  participants:'Semua divisi',    date:t, start:hhmm(15,30),end:hhmm(17,0),note:''},
+    {id:uid(),roomId:'r4',title:'Presentasi Vendor',         pic:'Pak Deni',  participants:'Procurement',     date:t, start:hhmm(10,0), end:hhmm(12,0),note:''},
+    {id:uid(),roomId:'r1',title:'Kick-off Project Baru',     pic:'Bu Ratna',  participants:'PM, Dev, Design', date:t1,start:hhmm(9,0),  end:hhmm(11,0),note:''},
+    {id:uid(),roomId:'r2',title:'Demo Produk ke Klien',      pic:'Pak Budi',  participants:'Sales, Klien',    date:t2,start:hhmm(10,0), end:hhmm(12,0),note:''},
+  ];
+  localStorage.setItem('rmb_bookings_local',JSON.stringify(bookings));
+}
+function getBookingsByDate(date) {
+  return bookings.filter(b=>String(b.date)===date).sort((a,b)=>a.start.localeCompare(b.start));
+}
+function getRoomStatus(roomId,date) {
+  if(!isToday(date)) return {status:'future',booking:null};
+  const now=nowMin(),bks=getBookingsByDate(date).filter(b=>b.roomId===roomId);
+  const cur=bks.find(b=>timeToMin(b.start)<=now&&timeToMin(b.end)>now);
+  if(cur) return {status:'occupied',booking:cur};
+  const nxt=bks.find(b=>timeToMin(b.start)>now&&timeToMin(b.start)-now<=30);
+  if(nxt) return {status:'soon',booking:nxt};
+  return {status:'available',booking:null};
+}
+
+// ═══ CLOCK ═══
+function updateClock() {
+  const n=new Date();
+  document.getElementById('live-clock').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+}
+setInterval(updateClock,1000); updateClock();
+
+// ═══ DATE NAV ═══
+function updateDateNav() {
+  const today=todayDate(),diff=Math.round((new Date(viewDate+'T00:00:00')-new Date(today+'T00:00:00'))/86400000);
+  document.getElementById('date-nav-label').textContent=formatDateLabel(viewDate);
+  document.getElementById('date-nav-sub').textContent=diff===0?'Hari ini':diff===1?'Besok':diff===-1?'Kemarin':diff>0?`${diff} hari lagi`:`${Math.abs(diff)} hari lalu`;
+  document.getElementById('btn-today').classList.toggle('active',viewDate===today);
+}
+function changeDate(delta) { viewDate=addDays(viewDate,delta); updateDateNav(); render(); }
+function goToToday() { viewDate=todayDate(); updateDateNav(); render(); }
+
+// ═══ ROUTING ═══
+function showPage(name,tabBtn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  if(tabBtn){document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));tabBtn.classList.add('active');}
+  const isRoom=name==='mobile-room';
+  const isHidden=(name==='qr');
+  document.getElementById('main-nav').style.display=(isRoom||isHidden)?'none':'';
+  document.getElementById('btn-booking-new').style.display=isRoom?'none':'';
+  if(name==='qr') renderQR();
+}
+function goHome() {
+  mobileRoomId=null;
+  document.getElementById('header-title').textContent='SyncRoom';
+  document.getElementById('main-nav').style.display='';
+  document.getElementById('btn-booking-new').style.display='';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-dashboard').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  history.replaceState(null,'',location.pathname);
+}
+function openMobileRoom(roomId) {
+  mobileRoomId=roomId;
+  document.getElementById('header-title').textContent=ROOMS.find(r=>r.id===roomId)?.name||'SyncRoom';
+  renderMobileRoom(roomId); showPage('mobile-room');
+}
+function checkURLParam() {
+  const p=new URLSearchParams(location.search);
+  const r=p.get('room');
+  if(r&&ROOMS.find(rm=>rm.id===r)){openMobileRoom(r);return;}
+  if(p.get('page')==='qr') showPage('qr');
+}
+
+// ═══ QR ═══
+function renderQR() {
+  if(qrGenerated) return;
+  const baseUrl=location.href.split('?')[0];
+  document.getElementById('qr-url-display').textContent=baseUrl;
+  new QRCode(document.getElementById('qr-main'),{
+    text:baseUrl, width:180, height:180,
+    colorDark:'#361304', colorLight:'#FFFFFF',
+    correctLevel:QRCode.CorrectLevel.M
+  });
+  qrGenerated=true;
+}
+
+// ═══ RENDER ═══
+function render() {
+  updateDateNav(); renderStats(); renderRoomList(); renderTimeline(); renderBookingList(); populateRoomSelects();
+}
+function renderStats() {
+  const isViewToday=isToday(viewDate);
+  const occ  =isViewToday?ROOMS.filter(r=>getRoomStatus(r.id,viewDate).status==='occupied').length:0;
+  const avail=isViewToday?ROOMS.filter(r=>getRoomStatus(r.id,viewDate).status==='available').length:ROOMS.length;
+  const bks=getBookingsByDate(viewDate),now=nowMin();
+  const next=isViewToday?bks.find(b=>timeToMin(b.start)>now):bks[0];
+  document.getElementById('stat-occupied').textContent=occ;
+  document.getElementById('stat-available').textContent=avail;
+  document.getElementById('stat-total').textContent=ROOMS.length;
+  document.getElementById('stat-today').textContent=bks.length;
+  if(next){const r=ROOMS.find(r=>r.id===next.roomId);document.getElementById('stat-next').textContent=next.start;document.getElementById('stat-next-sub').textContent=`${next.title.slice(0,18)}… · ${r?.name||''}`;}
+  else{document.getElementById('stat-next').textContent='—';document.getElementById('stat-next-sub').textContent='tidak ada jadwal';}
+}
+function renderRoomList() {
+  const lm={available:'Tersedia',occupied:'Sedang Digunakan',soon:'Segera Digunakan',future:'Lihat Jadwal'};
+  document.getElementById('room-list').innerHTML=ROOMS.map(room=>{
+    const {status,booking}=getRoomStatus(room.id,viewDate);
+    const bks=getBookingsByDate(viewDate).filter(b=>b.roomId===room.id);
+    const info=status==='occupied'?`${booking.pic} · ${booking.start}–${booking.end}`:status==='soon'?`${booking.title} · mulai ${booking.start}`:bks.length?`${bks.length} booking terjadwal`:'Tidak ada jadwal';
+    return `<div class="room-item" onclick="openMobileRoom('${room.id}')">
+      <div class="room-dot" style="background:${room.color}"></div>
+      <div class="room-info"><div class="room-name">${room.name}</div><div class="room-meta">${room.floor} · Kapasitas ${room.capacity} orang</div></div>
+      <div class="room-status-area"><span class="badge ${status}"><span class="badge-dot"></span>${lm[status]}</span><span class="room-booking-info">${info}</span></div>
+    </div>`;
+  }).join('');
+}
+const TL_START=7*60,TL_END=20*60,TL_RANGE=TL_END-TL_START;
+function renderTimeline() {
+  document.getElementById('time-labels-row').innerHTML=[7,9,11,13,15,17,19].map(h=>`<span class="time-label">${hhmm(h,0)}</span>`).join('');
+  const now=nowMin(),showNow=isToday(viewDate),nowPct=Math.min(100,Math.max(0,(now-TL_START)/TL_RANGE*100));
+  const bks=getBookingsByDate(viewDate);
+  document.getElementById('timeline-rows').innerHTML=ROOMS.map(room=>{
+    const blocks=bks.filter(b=>b.roomId===room.id).map(b=>{
+      const s=timeToMin(b.start),e=timeToMin(b.end);
+      const left=Math.max(0,(s-TL_START)/TL_RANGE*100),width=Math.min(100-left,(e-s)/TL_RANGE*100);
+      const st=!showNow?'upcoming':e<=now?'done':s<=now?'occupied':'upcoming';
+      return `<div class="timeline-block ${st}" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;" title="${b.title}&#10;${b.pic} · ${b.start}–${b.end}">${b.title.length>14?b.title.slice(0,12)+'…':b.title}</div>`;
+    }).join('');
+    const nl=(showNow&&now>=TL_START&&now<TL_END)?`<div class="timeline-now-line" style="left:${nowPct.toFixed(1)}%"></div>`:'';
+    return `<div class="timeline-row"><div class="timeline-room-label">${room.name.replace('Ruang ','')}</div><div class="timeline-track">${blocks}${nl}</div></div>`;
+  }).join('');
+}
+function renderBookingList() {
+  const el=document.getElementById('booking-list'),now=nowMin(),showNow=isToday(viewDate),bks=getBookingsByDate(viewDate);
+  if(!bks.length){el.innerHTML=`<div class="empty-state">Belum ada booking untuk tanggal ini.<br><span style="color:#7E3524;cursor:pointer;" onclick="openBookingModal()">+ Tambah booking baru</span></div>`;return;}
+  el.innerHTML=bks.map(b=>{
+    const room=ROOMS.find(r=>r.id===b.roomId),s=timeToMin(b.start),e=timeToMin(b.end);
+    const isNow=showNow&&s<=now&&e>now,isDone=showNow&&e<=now;
+    const dot=isNow?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:5px;animation:pulse 1.5s infinite;"></span>`:isDone?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--border-strong);margin-right:5px;"></span>`:'';
+    return `<div class="booking-item" style="${isDone?'opacity:0.5':''}">
+      <div class="booking-time-col">${b.start}<br>${b.end}</div>
+      <div class="booking-detail"><div class="booking-title">${dot}${b.title}</div><div class="booking-meta">${room?.name||''} · PIC: ${b.pic}${b.pax?` · ${b.pax} peserta`:''}${b.participants?` (${b.participants})`:''}</div>${b.email||b.phone?`<div style="font-size:11px;color:var(--text-3);margin-top:3px;display:flex;gap:12px;">${b.email?`<span>✉ ${b.email}</span>`:''}${b.phone?`<span>☎ ${b.phone}</span>`:''}</div>`:''} ${b.note?`<div style="font-size:11px;color:var(--text-3);margin-top:2px;">${b.note}</div>`:''}</div>
+      <div class="booking-actions"><button class="btn-icon" onclick="promptDelete('${b.id}','${b.title.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>
+    </div>`;
+  }).join('');
+}
+function renderMobileRoom(roomId) {
+  const room=ROOMS.find(r=>r.id===roomId); if(!room) return;
+  const {status,booking}=getRoomStatus(roomId,todayDate());
+  const lm={available:'Tersedia Sekarang',occupied:'Sedang Digunakan',soon:'Segera Digunakan',future:'—'};
+  const now=nowMin(),tbks=getBookingsByDate(todayDate()).filter(b=>b.roomId===roomId);
+  let curHtml='';
+  if(status==='occupied'&&booking) curHtml=`<div class="mobile-current-info"><div class="mobile-current-title">${booking.title}</div><div>PIC: ${booking.pic}</div>${booking.pax?`<div>Jumlah Peserta: ${booking.pax} orang</div>`:''} ${booking.participants?`<div>Peserta: ${booking.participants}</div>`:''} ${booking.email?`<div>✉ ${booking.email}</div>`:''} ${booking.phone?`<div>☎ ${booking.phone}</div>`:''}<div style="margin-top:4px;font-family:'DM Mono',monospace;font-size:12px;">${booking.start} – ${booking.end}</div></div>`;
+  else if(status==='soon'&&booking) curHtml=`<div class="mobile-current-info"><div style="font-size:12px;color:var(--text-3);margin-bottom:4px;">Akan segera digunakan:</div><div class="mobile-current-title">${booking.title}</div><div>Mulai: ${booking.start} · PIC: ${booking.pic}</div>${booking.pax?`<div>${booking.pax} peserta</div>`:''} ${booking.phone?`<div>☎ ${booking.phone}</div>`:''}</div>`;
+  const schedHtml=tbks.length?tbks.map(b=>{
+    const isDone=timeToMin(b.end)<=now,isNow=timeToMin(b.start)<=now&&timeToMin(b.end)>now;
+    const dc=isNow?'var(--red)':isDone?'var(--border-strong)':'#8E5632';
+    return `<div class="mobile-schedule-item" style="${isDone?'opacity:0.5':''}"><div style="width:8px;height:8px;border-radius:50%;background:${dc};margin-top:5px;flex-shrink:0;${isNow?'animation:pulse 1.5s infinite':''}"></div><div class="mobile-schedule-time">${b.start}<br>${b.end}</div><div class="mobile-schedule-info"><div class="mobile-schedule-title">${b.title}</div><div class="mobile-schedule-meta">PIC: ${b.pic}${b.participants?` · ${b.participants}`:''}</div></div></div>`;
+  }).join(''):`<div style="padding:20px;text-align:center;color:var(--text-3);font-size:13px;">Belum ada jadwal hari ini.</div>`;
+  document.getElementById('mobile-room-content').innerHTML=`
+    <div class="mobile-room-hero">
+      <div class="mobile-floor-tag">${room.floor} · Kapasitas ${room.capacity} orang</div>
+      <div class="mobile-room-name">${room.name}</div>
+      <div class="mobile-status-big ${status}"><div class="status-dot-big"></div>${lm[status]}</div>
+      ${curHtml}
+    </div>
+    <div><div class="mobile-section-title">Jadwal Hari Ini</div>${schedHtml}</div>`;
+  setTimeout(()=>{const s=document.getElementById('m-room');if(s) s.value=roomId;},50);
+}
+function populateRoomSelects() {
+  const opts=ROOMS.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+  ['q-room','m-room'].forEach(id=>{const el=document.getElementById(id);if(el) el.innerHTML=opts;});
+}
+
+// ═══ BOOKING ═══
+function getDefaultTimes() {
+  const n=new Date(),h=n.getHours(),m=Math.ceil(n.getMinutes()/15)*15;
+  const sh=m>=60?h+1:h,sm=m>=60?0:m,startMin=sh*60+sm;
+  return {start:minToTime(startMin),end:minToTime(startMin+60)};
+}
+function openBookingModal() {
+  const {start,end}=getDefaultTimes();
+  document.getElementById('m-start').value=start;
+  document.getElementById('m-end').value=end;
+  document.getElementById('m-date').value=viewDate;
+  if(mobileRoomId) setTimeout(()=>{const s=document.getElementById('m-room');if(s) s.value=mobileRoomId;},50);
+  document.getElementById('booking-modal').classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function validateBooking(roomId,date,start,end,title,pic,email) {
+  if(!title.trim()){showToast('Nama acara tidak boleh kosong.','error');return false;}
+  if(!pic.trim())  {showToast('Penanggungjawab tidak boleh kosong.','error');return false;}
+  if(!date)        {showToast('Tanggal harus diisi.','error');return false;}
+  if(!start||!end) {showToast('Waktu mulai & selesai harus diisi.','error');return false;}
+  if(timeToMin(start)>=timeToMin(end)){showToast('Waktu selesai harus setelah waktu mulai.','error');return false;}
+  if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showToast('Format email tidak valid.','error');return false;}
+  const c=getBookingsByDate(date).find(b=>b.roomId===roomId&&timeToMin(b.start)<timeToMin(end)&&timeToMin(b.end)>timeToMin(start));
+  if(c){showToast(`Konflik dengan "${c.title}" (${c.start}–${c.end})`,'error');return false;}
+  return true;
+}
+async function saveBooking(booking) {
+  if(SHEET_URL){setLoading(true);try{await apiPost({action:'add',booking});setSheetStatus('connected','Terhubung ke Sheets');}catch(e){setSheetStatus('disconnected','Gagal simpan');showToast('Gagal simpan ke Google Sheets.','error');}finally{setLoading(false);}}
+  bookings.push(booking); localStorage.setItem('rmb_bookings_local',JSON.stringify(bookings));
+}
+async function sendBookingConfirmationEmail(userName, userEmail, meetingDetails) {
+  if(!window.emailjs || !userEmail) return;
+  const templateParams = {
+    user_name: userName,
+    user_email: userEmail,
+    meeting_title: meetingDetails.title || '',
+    meeting_room: meetingDetails.roomName || '',
+    meeting_date: meetingDetails.date || '',
+    meeting_start: meetingDetails.start || '',
+    meeting_end: meetingDetails.end || '',
+    meeting_pax: meetingDetails.pax || '',
+    meeting_participants: meetingDetails.participants || '',
+    meeting_pic: meetingDetails.pic || '',
+    meeting_note: meetingDetails.note || '',
+  };
+  try {
+    const result = await emailjs.send('service_dt561th', 'template_ot1hrwt', templateParams);
+    console.log('EmailJS sent:', result);
+    return result;
+  } catch (error) {
+    console.error('EmailJS error:', error);
+    showToast('Gagal kirim email konfirmasi.','error');
+    throw error;
+  }
+}
+async function deleteBookingById(id) {
+  if(SHEET_URL){setLoading(true);try{await apiPost({action:'delete',id});}catch(e){showToast('Gagal hapus dari Sheets.','error');}finally{setLoading(false);}}
+  bookings=bookings.filter(b=>b.id!==id); localStorage.setItem('rmb_bookings_local',JSON.stringify(bookings));
+}
+async function submitModalBooking() {
+  const roomId=document.getElementById('m-room').value,date=document.getElementById('m-date').value,
+        start=document.getElementById('m-start').value,end=document.getElementById('m-end').value,
+        title=document.getElementById('m-title').value,pic=document.getElementById('m-pic').value,
+        parts=document.getElementById('m-participants').value,note=document.getElementById('m-note').value,
+        email=document.getElementById('m-email').value.trim(),phone=document.getElementById('m-phone').value.trim(),
+        pax=document.getElementById('m-pax').value;
+  if(!validateBooking(roomId,date,start,end,title,pic,email)) return;
+  const btn=document.getElementById('m-submit-btn'); btn.disabled=true; btn.textContent='Menyimpan…';
+  await saveBooking({id:uid(),roomId,title,pic,email,phone,participants:parts,pax,date,start,end,note});
+  if(email){
+    sendBookingConfirmationEmail(pic,email,{roomName:ROOMS.find(r=>r.id===roomId)?.name||'',title,date,start,end,pax,participants:parts,pic,note});
+  }
+  btn.disabled=false; btn.textContent='Konfirmasi Booking';
+  closeModal('booking-modal');
+  ['m-title','m-pic','m-email','m-phone','m-participants','m-pax','m-note'].forEach(id=>document.getElementById(id).value='');
+  render(); if(mobileRoomId) renderMobileRoom(mobileRoomId);
+  showToast('Booking berhasil disimpan.','success');
+}
+async function submitQuickBooking() {
+  const roomId=document.getElementById('q-room').value,date=document.getElementById('q-date').value,
+        start=document.getElementById('q-start').value,end=document.getElementById('q-end').value,
+        title=document.getElementById('q-title').value,pic=document.getElementById('q-pic').value,
+        parts=document.getElementById('q-participants').value,
+        email=document.getElementById('q-email').value.trim(),phone=document.getElementById('q-phone').value.trim(),
+        pax=document.getElementById('q-pax').value;
+  if(!validateBooking(roomId,date,start,end,title,pic,email)) return;
+  const btn=document.getElementById('q-submit-btn'); btn.disabled=true; btn.textContent='Menyimpan…';
+  await saveBooking({id:uid(),roomId,title,pic,email,phone,participants:parts,pax,date,start,end,note:''});
+  if(email){
+    sendBookingConfirmationEmail(pic,email,{roomName:ROOMS.find(r=>r.id===roomId)?.name||'',title,date,start,end,pax,participants:parts,pic,note:''});
+  }
+  btn.disabled=false; btn.textContent='Buat Booking';
+  ['q-title','q-pic','q-email','q-phone','q-participants','q-pax'].forEach(id=>document.getElementById(id).value='');
+  render(); showToast('Booking berhasil disimpan.','success');
+}
+function promptDelete(id,name){deleteTargetId=id;document.getElementById('delete-booking-name').textContent=`"${name}"`;document.getElementById('delete-modal').classList.add('open');}
+async function confirmDelete(){closeModal('delete-modal');await deleteBookingById(deleteTargetId);render();if(mobileRoomId)renderMobileRoom(mobileRoomId);showToast('Booking dihapus.');}
+
+// ═══ UI HELPERS ═══
+function setLoading(show){document.getElementById('loading-overlay').classList.toggle('show',show);}
+function switchView(view,btn){document.querySelectorAll('.view-section').forEach(el=>el.classList.remove('active'));document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));document.getElementById(`view-${view}`).classList.add('active');btn.classList.add('active');}
+function showToast(msg,type='',dur=4000){const el=document.createElement('div');el.className=`toast${type?' '+type:''}`;el.textContent=msg;document.getElementById('toast-container').appendChild(el);setTimeout(()=>el.remove(),dur);}
+document.querySelectorAll('.modal-overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');}));
+
+// ═══ INIT ═══
+const {start:ds,end:de}=getDefaultTimes();
+document.getElementById('q-start').value=ds;
+document.getElementById('q-end').value=de;
+document.getElementById('q-date').value=todayDate();
+document.getElementById('m-date').value=todayDate();
+populateRoomSelects(); updateDateNav(); loadBookings(); checkURLParam();
+setInterval(()=>{render();if(mobileRoomId)renderMobileRoom(mobileRoomId);},30000);
+</script>
+</body>
+</html>
