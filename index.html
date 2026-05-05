@@ -721,7 +721,17 @@ function validateBooking(roomId,date,start,end,title,pic,email) {
   return true;
 }
 async function saveBooking(booking) {
-  if(SHEET_URL){setLoading(true);try{await apiPost({action:'add',booking});setSheetStatus('connected','Terhubung ke Sheets');}catch(e){setSheetStatus('disconnected','Gagal simpan');showToast('Gagal simpan ke Google Sheets.','error');}finally{setLoading(false);}}
+  if(SHEET_URL){
+    setLoading(true);
+    try{
+      const bookingToSend = {...booking, roomId: ROOMS.find(r=>r.id===booking.roomId)?.name || booking.roomId};
+      await apiPost({action:'add',booking: bookingToSend});
+      setSheetStatus('connected','Terhubung ke Sheets');
+    }catch(e){
+      setSheetStatus('disconnected','Gagal simpan');
+      showToast('Gagal simpan ke Google Sheets.','error');
+    }finally{setLoading(false);}
+  }
   bookings.push(booking); localStorage.setItem('rmb_bookings_local',JSON.stringify(bookings));
 }
 async function sendBookingConfirmationEmail(userName, userEmail, meetingDetails) {
