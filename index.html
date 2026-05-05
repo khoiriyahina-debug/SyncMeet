@@ -311,7 +311,7 @@ body { font-family:'DM Sans',system-ui,sans-serif; background:linear-gradient(18
         </div>
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Jadwal</span>
+            <span class="card-title" id="jadwal-title">Jadwal</span>
             <div class="tabs">
               <button class="tab active" onclick="switchView('timeline',this)">Timeline</button>
               <button class="tab" onclick="switchView('list',this)">Daftar</button>
@@ -481,7 +481,40 @@ function addDays(dateStr,n) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
 function formatDateLabel(dateStr) {
-  return new Date(dateStr+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const normalized = normalizeBookingDate(dateStr);
+  const d = new Date(normalized+'T00:00:00');
+  return isNaN(d.getTime()) ? 'Tanggal tidak valid' : d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function normalizeBookingDate(value) {
+  if(value==null) return '';
+  if(value instanceof Date) {
+    return `${value.getFullYear()}-${pad(value.getMonth()+1)}-${pad(value.getDate())}`;
+  }
+  const raw = String(value).trim();
+  if(raw==='') return '';
+  if(/^\d+(?:\.\d+)?$/.test(raw)) {
+    return serialToDateString(Number(raw));
+  }
+  const iso = new Date(raw);
+  if(!isNaN(iso.getTime())) {
+    return `${iso.getFullYear()}-${pad(iso.getMonth()+1)}-${pad(iso.getDate())}`;
+  }
+  const dmy = raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+  if(dmy) {
+    return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+  }
+  const ymd = raw.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+  if(ymd) {
+    return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+  }
+  return raw;
+}
+function serialToDateString(serial) {
+  if(isNaN(serial)) return '';
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const base = new Date(Date.UTC(1899, 11, 30));
+  const date = new Date(base.getTime() + Math.floor(serial) * msPerDay);
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth()+1)}-${pad(date.getUTCDate())}`;
 }
 
 // ═══ SHEETS API ═══
@@ -502,7 +535,10 @@ async function loadBookings() {
   setSheetStatus('loading','Memuat…');
   try {
     const data=await apiGet();
-    bookings=data.bookings.map(b=>({...b,date:String(b.date)}));
+    bookings=data.bookings.map(b=>({
+      ...b,
+      date: normalizeBookingDate(b.date)
+    }));
     setSheetStatus('connected','Terhubung ke Sheets');
     render();
   } catch(e) {
@@ -513,7 +549,10 @@ async function loadBookings() {
 }
 function loadFallback() {
   const s=localStorage.getItem('rmb_bookings_local');
-  bookings=s?JSON.parse(s):[];
+  bookings=s?JSON.parse(s).map(b=>({
+    ...b,
+    date: normalizeBookingDate(b.date)
+  })):[];
   if(!bookings.length) seedSample();
   render();
 }
@@ -556,6 +595,7 @@ function updateDateNav() {
   document.getElementById('date-nav-label').textContent=formatDateLabel(viewDate);
   document.getElementById('date-nav-sub').textContent=diff===0?'Hari ini':diff===1?'Besok':diff===-1?'Kemarin':diff>0?`${diff} hari lagi`:`${Math.abs(diff)} hari lalu`;
   document.getElementById('btn-today').classList.toggle('active',viewDate===today);
+  document.getElementById('jadwal-title').textContent='Jadwal - '+formatDateLabel(viewDate);
 }
 function changeDate(delta) { viewDate=addDays(viewDate,delta); updateDateNav(); render(); }
 function goToToday() { viewDate=todayDate(); updateDateNav(); render(); }
@@ -655,20 +695,17 @@ function renderTimeline() {
 function renderBookingList() {
   const el=document.getElementById('booking-list');
   const now=nowMin();
-  const bks=bookings.slice().sort((a,b)=>{
-    if(a.date!==b.date) return a.date.localeCompare(b.date);
-    return a.start.localeCompare(b.start);
-  });
-  if(!bks.length){el.innerHTML=`<div class="empty-state">Belum ada booking tersimpan.<br><span style="color:#7E3524;cursor:pointer;" onclick="openBookingModal()">+ Tambah booking baru</span></div>`;return;}
-  let currentDate='';
+  const bks=getBookingsByDate(viewDate);
+  if(!bks.length){
+    el.innerHTML=`<div class="empty-state">Belum ada booking untuk tanggal ini.<br><span style="color:#7E3524;cursor:pointer;" onclick="openBookingModal()">+ Tambah booking baru</span></div>`;
+    return;
+  }
   el.innerHTML=bks.map(b=>{
     const room=ROOMS.find(r=>r.id===b.roomId),s=timeToMin(b.start),e=timeToMin(b.end);
     const isNow=isToday(b.date)&&s<=now&&e>now;
     const isDone=isToday(b.date)&&e<=now;
     const dot=isNow?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:5px;animation:pulse 1.5s infinite;"></span>`:isDone?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--border-strong);margin-right:5px;"></span>`:'';
-    const dateLabel=b.date!==currentDate?`<div style="font-size:12px;font-weight:700;color:var(--text-1);margin:14px 0 8px;">${formatDateLabel(b.date)}</div>`:'';
-    currentDate=b.date;
-    return `${dateLabel}<div class="booking-item" style="${isDone?'opacity:0.5':''}">
+    return `<div class="booking-item" style="${isDone?'opacity:0.5':''}">
       <div class="booking-time-col">${b.start}<br>${b.end}</div>
       <div class="booking-detail"><div class="booking-title">${dot}${b.title}</div><div class="booking-meta">${room?.name||''} · PIC: ${b.pic}${b.pax?` · ${b.pax} peserta`:''}${b.participants?` (${b.participants})`:''}</div>${b.email||b.phone?`<div style="font-size:11px;color:var(--text-3);margin-top:3px;display:flex;gap:12px;">${b.email?`<span>✉ ${b.email}</span>`:''}${b.phone?`<span>☎ ${b.phone}</span>`:''}</div>`:''} ${b.note?`<div style="font-size:11px;color:var(--text-3);margin-top:2px;">${b.note}</div>`:''}</div>
       <div class="booking-actions"><button class="btn-icon" onclick="promptDelete('${b.id}','${b.title.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>
