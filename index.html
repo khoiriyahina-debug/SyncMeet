@@ -541,6 +541,13 @@ function normalizeBookingTime(value) {
   
   return raw;
 }
+function normalizeBookingRoomId(value) {
+  if(value==null) return '';
+  const raw = String(value).trim();
+  if(raw==='') return '';
+  const room = ROOMS.find(r => r.id === raw || r.name === raw);
+  return room ? room.id : raw;
+}
 function serialTimeToHHMM(serial) {
   const totalMinutes = Math.round(serial * 24 * 60);
   return hhmm(Math.floor(totalMinutes / 60), totalMinutes % 60);
@@ -577,6 +584,7 @@ async function loadBookings() {
     bookings=data.bookings.map(b=>({
       ...b,
       date: normalizeBookingDate(b.date),
+      roomId: normalizeBookingRoomId(b.roomId),
       start: normalizeBookingTime(b.start),
       end: normalizeBookingTime(b.end)
     }));
@@ -593,6 +601,7 @@ function loadFallback() {
   bookings=s?JSON.parse(s).map(b=>({
     ...b,
     date: normalizeBookingDate(b.date),
+    roomId: normalizeBookingRoomId(b.roomId),
     start: normalizeBookingTime(b.start),
     end: normalizeBookingTime(b.end)
   })):[];
