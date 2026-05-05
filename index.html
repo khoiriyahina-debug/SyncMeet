@@ -653,13 +653,22 @@ function renderTimeline() {
   }).join('');
 }
 function renderBookingList() {
-  const el=document.getElementById('booking-list'),now=nowMin(),showNow=isToday(viewDate),bks=getBookingsByDate(viewDate);
-  if(!bks.length){el.innerHTML=`<div class="empty-state">Belum ada booking untuk tanggal ini.<br><span style="color:#7E3524;cursor:pointer;" onclick="openBookingModal()">+ Tambah booking baru</span></div>`;return;}
+  const el=document.getElementById('booking-list');
+  const now=nowMin();
+  const bks=bookings.slice().sort((a,b)=>{
+    if(a.date!==b.date) return a.date.localeCompare(b.date);
+    return a.start.localeCompare(b.start);
+  });
+  if(!bks.length){el.innerHTML=`<div class="empty-state">Belum ada booking tersimpan.<br><span style="color:#7E3524;cursor:pointer;" onclick="openBookingModal()">+ Tambah booking baru</span></div>`;return;}
+  let currentDate='';
   el.innerHTML=bks.map(b=>{
     const room=ROOMS.find(r=>r.id===b.roomId),s=timeToMin(b.start),e=timeToMin(b.end);
-    const isNow=showNow&&s<=now&&e>now,isDone=showNow&&e<=now;
+    const isNow=isToday(b.date)&&s<=now&&e>now;
+    const isDone=isToday(b.date)&&e<=now;
     const dot=isNow?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:5px;animation:pulse 1.5s infinite;"></span>`:isDone?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--border-strong);margin-right:5px;"></span>`:'';
-    return `<div class="booking-item" style="${isDone?'opacity:0.5':''}">
+    const dateLabel=b.date!==currentDate?`<div style="font-size:12px;font-weight:700;color:var(--text-1);margin:14px 0 8px;">${formatDateLabel(b.date)}</div>`:'';
+    currentDate=b.date;
+    return `${dateLabel}<div class="booking-item" style="${isDone?'opacity:0.5':''}">
       <div class="booking-time-col">${b.start}<br>${b.end}</div>
       <div class="booking-detail"><div class="booking-title">${dot}${b.title}</div><div class="booking-meta">${room?.name||''} · PIC: ${b.pic}${b.pax?` · ${b.pax} peserta`:''}${b.participants?` (${b.participants})`:''}</div>${b.email||b.phone?`<div style="font-size:11px;color:var(--text-3);margin-top:3px;display:flex;gap:12px;">${b.email?`<span>✉ ${b.email}</span>`:''}${b.phone?`<span>☎ ${b.phone}</span>`:''}</div>`:''} ${b.note?`<div style="font-size:11px;color:var(--text-3);margin-top:2px;">${b.note}</div>`:''}</div>
       <div class="booking-actions"><button class="btn-icon" onclick="promptDelete('${b.id}','${b.title.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>
