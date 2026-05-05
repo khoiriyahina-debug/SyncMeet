@@ -509,11 +509,43 @@ function normalizeBookingDate(value) {
   }
   return raw;
 }
-function serialToDateString(serial) {
-  if(isNaN(serial)) return '';
+function normalizeBookingTime(value) {
+  if(value==null) return '';
+  if(value instanceof Date) {
+    return hhmm(value.getHours(), value.getMinutes());
+  }
+  const raw = String(value).trim();
+  if(raw==='') return '';
+  const iso = new Date(raw);
+  if(!isNaN(iso.getTime())) {
+    return hhmm(iso.getHours(), iso.getMinutes());
+  }
+  if(/^\d+(?:\.\d+)?$/.test(raw)) {
+    const num = Number(raw);
+    if(num < 1) {
+      return serialTimeToHHMM(num);
+    }
+    const dt = serialToDate(num);
+    return hhmm(dt.getUTCHours(), dt.getUTCMinutes());
+  }
+  const timeMatch = raw.match(/(\d{1,2}):(\d{2})/);
+  if(timeMatch) {
+    return hhmm(Number(timeMatch[1]), Number(timeMatch[2]));
+  }
+  return raw;
+}
+function serialTimeToHHMM(serial) {
+  const totalMinutes = Math.round(serial * 24 * 60);
+  return hhmm(Math.floor(totalMinutes / 60), totalMinutes % 60);
+}
+function serialToDate(serial) {
   const msPerDay = 24 * 60 * 60 * 1000;
   const base = new Date(Date.UTC(1899, 11, 30));
-  const date = new Date(base.getTime() + Math.floor(serial) * msPerDay);
+  return new Date(base.getTime() + Math.floor(serial) * msPerDay);
+}
+function serialToDateString(serial) {
+  if(isNaN(serial)) return '';
+  const date = serialToDate(serial);
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth()+1)}-${pad(date.getUTCDate())}`;
 }
 
@@ -537,7 +569,9 @@ async function loadBookings() {
     const data=await apiGet();
     bookings=data.bookings.map(b=>({
       ...b,
-      date: normalizeBookingDate(b.date)
+      date: normalizeBookingDate(b.date),
+      start: normalizeBookingTime(b.start),
+      end: normalizeBookingTime(b.end)
     }));
     setSheetStatus('connected','Terhubung ke Sheets');
     render();
@@ -551,7 +585,9 @@ function loadFallback() {
   const s=localStorage.getItem('rmb_bookings_local');
   bookings=s?JSON.parse(s).map(b=>({
     ...b,
-    date: normalizeBookingDate(b.date)
+    date: normalizeBookingDate(b.date),
+    start: normalizeBookingTime(b.start),
+    end: normalizeBookingTime(b.end)
   })):[];
   if(!bookings.length) seedSample();
   render();
