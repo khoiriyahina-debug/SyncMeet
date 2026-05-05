@@ -516,10 +516,20 @@ function normalizeBookingTime(value) {
   }
   const raw = String(value).trim();
   if(raw==='') return '';
+  
+  // Coba ekstrak format HH:mm dari string apapun
+  const timeMatch = raw.match(/(\d{1,2}):(\d{2})/);
+  if(timeMatch) {
+    return hhmm(Number(timeMatch[1]), Number(timeMatch[2]));
+  }
+  
+  // Jika format ISO datetime, ambil jam dan menitnya
   const iso = new Date(raw);
   if(!isNaN(iso.getTime())) {
     return hhmm(iso.getHours(), iso.getMinutes());
   }
+  
+  // Jika angka (serial Excel), konversi dan ambil jam/menitnya
   if(/^\d+(?:\.\d+)?$/.test(raw)) {
     const num = Number(raw);
     if(num < 1) {
@@ -528,10 +538,7 @@ function normalizeBookingTime(value) {
     const dt = serialToDate(num);
     return hhmm(dt.getUTCHours(), dt.getUTCMinutes());
   }
-  const timeMatch = raw.match(/(\d{1,2}):(\d{2})/);
-  if(timeMatch) {
-    return hhmm(Number(timeMatch[1]), Number(timeMatch[2]));
-  }
+  
   return raw;
 }
 function serialTimeToHHMM(serial) {
