@@ -423,23 +423,6 @@ body { font-family:'DM Sans',system-ui,sans-serif; background:linear-gradient(18
   </div>
 </div>
 
-<!-- Modal Delete -->
-<div class="modal-overlay" id="delete-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Hapus Booking</span>
-      <button class="btn-icon" onclick="closeModal('delete-modal')"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Yakin ingin menghapus booking <strong id="delete-booking-name"></strong>?</p>
-      <div style="display:flex;gap:10px;">
-        <button class="btn-primary" style="background:var(--red);" onclick="confirmDelete()">Hapus</button>
-        <button class="btn-primary" style="background:var(--surface);color:var(--text-1);border:1px solid var(--border);" onclick="closeModal('delete-modal')">Batal</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 // ╔══════════════════════════════════════════════════════════════╗
 //  ⚙️  KONFIGURASI — edit di sini, tidak perlu lewat UI
@@ -764,7 +747,6 @@ function renderBookingList() {
     return `<div class="booking-item" style="${isDone?'opacity:0.5':''}">
       <div class="booking-time-col">${b.start}<br>${b.end}</div>
       <div class="booking-detail"><div class="booking-title">${dot}${b.title}</div><div class="booking-meta">${room?.name||''} · PIC: ${b.pic}${b.pax?` · ${b.pax} peserta`:''}${b.participants?` (${b.participants})`:''}</div>${b.email||b.phone?`<div style="font-size:11px;color:var(--text-3);margin-top:3px;display:flex;gap:12px;">${b.email?`<span>✉ ${b.email}</span>`:''}${b.phone?`<span>☎ ${b.phone}</span>`:''}</div>`:''} ${b.note?`<div style="font-size:11px;color:var(--text-3);margin-top:2px;">${b.note}</div>`:''}</div>
-      <div class="booking-actions"><button class="btn-icon" onclick="promptDelete('${b.id}','${b.title.replace(/'/g,"\\'")}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>
     </div>`;
   }).join('');
 }
@@ -901,9 +883,6 @@ async function submitQuickBooking() {
   ['q-title','q-pic','q-email','q-phone','q-participants','q-pax'].forEach(id=>document.getElementById(id).value='');
   render(); showToast('Booking berhasil disimpan.','success');
 }
-function promptDelete(id,name){deleteTargetId=id;document.getElementById('delete-booking-name').textContent=`"${name}"`;document.getElementById('delete-modal').classList.add('open');}
-async function confirmDelete(){closeModal('delete-modal');await deleteBookingById(deleteTargetId);render();if(mobileRoomId)renderMobileRoom(mobileRoomId);showToast('Booking dihapus.');}
-
 // ═══ UI HELPERS ═══
 function setLoading(show){document.getElementById('loading-overlay').classList.toggle('show',show);}
 function switchView(view,btn){document.querySelectorAll('.view-section').forEach(el=>el.classList.remove('active'));document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));document.getElementById(`view-${view}`).classList.add('active');btn.classList.add('active');}
